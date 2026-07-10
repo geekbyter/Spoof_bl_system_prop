@@ -1,10 +1,8 @@
 # Spoof_bl_prop
 
-A Magisk/APatch/KernelSU module that spoofs system properties to bypass detection apps.
+A Magisk/APatch/KernelSU module that spoofs bootloader and system properties to bypass detection apps.
 
-## What It Does
-
-This module modifies the following system properties in memory (no disk modifications):
+## What It Spoofs
 
 ### Bootloader Properties
 | Property | Original | Spoofed |
@@ -26,53 +24,40 @@ This module modifies the following system properties in memory (no disk modifica
 | `sys.usb.config` | `adb` | `mtp` |
 | `sys.usb.state` | `adb` | `mtp` |
 
-## Features
+## How It Works
 
-- **In-memory modification**: Uses `resetprop` for safe, non-destructive property modification
-- **Universal compatibility**: Works with APatch, Magisk, and KernelSU
-- **No disk changes**: Properties are modified in memory only, safe to reboot
-- **ADB preserved**: USB config is sanitized but ADB functionality remains intact
-- **Boot-time application**: Properties are set early in boot process
+Uses `resetprop` (available in APatch, Magisk, KernelSU) to modify properties in memory. No disk modifications, no kernel hooks, no Zygisk injection.
 
-## Installation
+Properties are applied at two stages:
+1. `post-fs-data.sh` — early boot
+2. `service.sh` — after `sys.boot_completed=1`
 
-1. Download the latest release zip
-2. Install via your root manager (Magisk/APatch/KernelSU)
-3. Reboot your device
+## Install
+
+```bash
+# Via APatch
+apd module install Spoof_bl_prop-v1.0.0.zip
+
+# Via Magisk
+magisk --install-module Spoof_bl_prop-v1.0.0.zip
+```
+
+Reboot after install.
 
 ## Compatibility
 
 - Android 10+
-- APatch/FolkPatch
+- APatch / FolkPatch
 - Magisk
 - KernelSU
 
-## How It Works
+## Build
 
-The module uses `resetprop` (available in APatch, Magisk, and KernelSU) to modify system properties in memory. This is the same technique used by the root managers themselves.
-
-The modifications are applied at two stages:
-1. **post-fs-data**: Early boot (before most services start)
-2. **service**: After boot completes (ensures all properties are set)
-
-## Safety
-
-- No disk modifications
-- No kernel modifications
-- No hook installations
-- Properties reset on reboot
-- ADB functionality preserved
-
-## Building
-
-### Local Build
 ```bash
-cd module
-zip -r ../Spoof_bl_prop-v1.0.0.zip module.prop customize.sh post-fs-data.sh service.sh META-INF/
+zip -r9 Spoof_bl_prop-v1.0.0.zip module.prop customize.sh post-fs-data.sh service.sh META-INF/
 ```
 
-### GitHub Actions
-The repository includes a GitHub Actions workflow that automatically builds the module on push to main.
+Or push to GitHub — Actions will build automatically.
 
 ## License
 
