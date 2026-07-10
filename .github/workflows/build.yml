@@ -1,0 +1,87 @@
+name: Build Magisk Module
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore: [ '**.md' ]
+  pull_request:
+    branches: [ main ]
+    paths-ignore: [ '**.md' ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up build environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip
+
+      - name: Build module
+        run: |
+          cd module
+          zip -r ../Spoof_bl_prop-v1.0.0.zip \
+            module.prop \
+            customize.sh \
+            post-fs-data.sh \
+            service.sh \
+            META-INF/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Spoof_bl_prop-module
+          path: Spoof_bl_prop-v1.0.0.zip
+          retention-days: 30
+
+  release:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: Spoof_bl_prop-module
+          path: .
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: Spoof_bl_prop-v1.0.0.zip
+          tag_name: v1.0.0
+          name: Spoof_bl_prop v1.0.0
+          body: |
+            ## Spoof_bl_prop v1.0.0
+            
+            Spoof your device bootloader and system properties to bypass detection apps.
+            
+            ### Features
+            - Partition dm-verity spoofing (2 → 1)
+            - OEM unlock support spoofing (1 → 0)
+            - SELinux state enforcement
+            - USB config sanitization (strips adb token)
+            
+            ### Installation
+            1. Download the zip file
+            2. Install via Magisk/APatch manager
+            3. Reboot your device
+            
+            ### Compatibility
+            - APatch/FolkPatch
+            - Magisk
+            - KernelSU
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
