@@ -1,0 +1,6 @@
+id=Spoof_bl_prop
+name=Spoof_bl_prop
+version=v1.0.0
+versionCode=10000
+author=geekbyte
+description=spoof your device bootloader and system prop
