@@ -20,15 +20,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up build environment
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y zip
-
       - name: Build module
         run: |
-          cd module
-          zip -r ../Spoof_bl_prop-v1.0.0.zip \
+          zip -r9 Spoof_bl_prop-v1.0.0.zip \
             module.prop \
             customize.sh \
             post-fs-data.sh \
@@ -57,31 +51,32 @@ jobs:
           name: Spoof_bl_prop-module
           path: .
 
+      - name: Read version
+        id: ver
+        run: |
+          ver=$(grep '^version=' module.prop | cut -d= -f2)
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
           files: Spoof_bl_prop-v1.0.0.zip
-          tag_name: v1.0.0
-          name: Spoof_bl_prop v1.0.0
+          tag_name: ${{ steps.ver.outputs.version }}
+          name: Spoof_bl_prop ${{ steps.ver.outputs.version }}
           body: |
-            ## Spoof_bl_prop v1.0.0
+            ## Spoof_bl_prop ${{ steps.ver.outputs.version }}
             
             Spoof your device bootloader and system properties to bypass detection apps.
             
-            ### Features
-            - Partition dm-verity spoofing (2 → 1)
-            - OEM unlock support spoofing (1 → 0)
-            - SELinux state enforcement
-            - USB config sanitization (strips adb token)
+            ### What it spoofs
+            - Partition dm-verity (`partition.*.verified` 2→1)
+            - OEM unlock (`ro.oem_unlock_supported` 1→0, `sys.oem_unlock_allowed` 1→0)
+            - SELinux state (`ro.boot.selinux`, `ro.build.selinux` → enforcing)
+            - USB config (strips `adb` token, keeps other modes like `mtp`)
             
-            ### Installation
-            1. Download the zip file
-            2. Install via Magisk/APatch manager
-            3. Reboot your device
-            
-            ### Compatibility
-            - APatch/FolkPatch
-            - Magisk
-            - KernelSU
+            ### Install
+            1. Download zip
+            2. Install via APatch/Magisk/KernelSU
+            3. Reboot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
